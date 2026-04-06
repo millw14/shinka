@@ -1,14 +1,8 @@
-﻿# ──────────────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 # shinka installer — simple script without try/catch to avoid parsing bugs
 # ──────────────────────────────────────────────────────────────────────────────
 $ErrorActionPreference = "Continue"
 
-Write-Host "  ██████  ██   ██ ██ ███    ██ ██   ██  █████" -ForegroundColor Cyan
-Write-Host " ██       ██   ██ ██ ████   ██ ██  ██  ██   ██" -ForegroundColor Cyan
-Write-Host " ███████  ████████ ██ ██ ██  ██ █████   ███████" -ForegroundColor Cyan
-Write-Host "      ██  ██   ██ ██ ██  ██ ██ ██  ██  ██   ██" -ForegroundColor Cyan
-Write-Host " ██████  ██   ██ ██ ██   ████ ██   ██ ██   ██" -ForegroundColor Cyan
-Write-Host ""
 Write-Host "  Installing shinka + local AI..." -ForegroundColor Yellow
 Write-Host ""
 
@@ -56,5 +50,5 @@ if (Get-Command "pipx" -ErrorAction SilentlyContinue) {
 Write-Host "  ✓ shinka installed" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "  ✧٩(ˊᗜˋ*)و✧  All done!" -ForegroundColor Green
+Write-Host "  All done!" -ForegroundColor Green
 Write-Host "  Type 'shinka' in any terminal to start." -ForegroundColor Cyan
