@@ -1,7 +1,6 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # shinka installer — one command to rule them all
-# Run:  irm https://raw.githubusercontent.com/.../install.ps1 | iex
-# Or locally:  .\install.ps1
+# Run:  Invoke-WebRequest https://raw.githubusercontent.com/millw14/shinka/main/install.ps1 -OutFile install.ps1; Unblock-File .\install.ps1; .\install.ps1
 # ──────────────────────────────────────────────────────────────────────────────
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +27,9 @@ foreach ($cmd in @("python", "python3", "py")) {
             $python = $cmd
             break
         }
-    } catch {}
+    } catch {
+        $null = $_
+    }
 }
 
 if (-not $python) {
@@ -74,7 +75,9 @@ try {
     try {
         $response = Invoke-WebRequest -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 3 -ErrorAction SilentlyContinue
         $ollamaRunning = $true
-    } catch {}
+    } catch {
+        $null = $_
+    }
 
     if (-not $ollamaRunning) {
         Start-Process "ollama" -ArgumentList "serve" -WindowStyle Hidden
@@ -97,7 +100,7 @@ if ($pipx) {
 } else {
     Write-Host "  ⚠ pipx not found (which is recommended for CLI apps)." -ForegroundColor DarkGray
     Write-Host "  Installing via pip instead..." -ForegroundColor Yellow
-    & $python -m pip install https://github.com/millw14/shinka/archive/main.zip --upgrade --quiet 2>&1 | Out-Null
+    & $python -m pip install https://github.com/millw14/shinka/archive/main.zip --upgrade --quiet
 }
 Write-Host "  ✓ shinka installed" -ForegroundColor Green
 
