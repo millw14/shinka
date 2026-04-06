@@ -1,64 +1,80 @@
-# shinka 進化
+# Shinka 進化 🪄
 
-> **7 Levels Frontend Design Prompt Wizard — with Local AI**
+> **Your local AI frontend design wizard. Scrape live websites to extract modern styles, animations, and layouts, then generate the ultimate god-tier AI coding prompt.**
 
-One command. Installs everything. Generates god-tier prompts for any AI code editor.
+Shinka is an automated CLI tool that acts as your personal frontend design architect. It uses a **Playwright headless browser** to scrape actual HTML structures, CSS variables, JS frameworks, and animations from your favorite reference websites. It then combines this extracted code with your project requirements and uses **local AI** (Ollama) to assemble the perfect prompt for tools like Claude, Cursor, or Windsurf.
 
-## Install
+---
 
+## 🚀 Installation
+
+You do not need to clone this repository to install Shinka. Just copy and paste the command for your operating system into an empty terminal.
+
+**Windows (PowerShell)**:
 ```powershell
-# Windows (PowerShell)
-.\install.ps1
+iwr -useb https://raw.githubusercontent.com/millw14/shinka/main/install.ps1 | iex
 ```
 
-That's it. Shinka will automatically:
-- ✅ Install Ollama (if not present)
-- ✅ Pull the local AI model (`llama3.2:1b`)
-- ✅ Install the `shinka` CLI globally
+**macOS / Linux (Bash)**:
+```bash
+curl -fsSL https://raw.githubusercontent.com/millw14/shinka/main/install.sh | bash
+```
 
-## Usage
+**What the installer does automatically:**
+- ✅ Installs Python (if missing)
+- ✅ Installs [Ollama](https://ollama.com/) (if missing)
+- ✅ Pulls the rapid `llama3.2:1b` model for local AI thinking
+- ✅ Installs `pipx` and globally installs the `shinka` CLI
+
+---
+
+## 🛠️ Usage
+
+After installation, simply run `shinka` in any new terminal window.
 
 ```bash
-# Full wizard — walks you through all 7 levels
+# Start the full 7-level design wizard
 shinka
 
-# Quick mode — Level 3 defaults, just name + description
+# Quick mode — skips the deep questions
 shinka --quick
 
-# Skip AI enhancement (offline/no Ollama)
+# Skip AI enhancement (offline mode)
 shinka --no-ai
 
-# Save to specific file
-shinka --output my_prompt.md
+# Save the final prompt to a specific file
+shinka --output my_god_tier_prompt.md
 ```
 
-## The 7 Levels
+### The Web Scraper (Level 4: The Cloner)
+When you reach the "Cloner" stage of the wizard, simply provide the URL of a website you admire. Shinka will boot up a hidden browser to:
+- Render the page to execute WebGL & JS
+- Extract inline CSS, text gradients, and CSS variables
+- Pull external CSS stylesheets dynamically
+- Rip out `@keyframes` and GSAP/Three.js signatures
+- Detect custom Google Fonts and global color palettes
+
+It automatically injects these technical specifications into your prompt, guaranteeing that the AI code editor writing your site accurately replicates the aesthetic.
+
+## 📈 The 7 Levels of Frontend Design
 
 | Level | Name | What It Does |
 |-------|------|-------------|
-| 1 | The Beginner | Basic prompting + anti-AI-slop rules |
-| 2 | Vocabulary Builder | Design references, fonts, colors, aesthetics |
-| 3 | Framework Master | Grids, typography scales, accessibility |
-| 4 | The Cloner | Paste real code from pro sites to replicate |
-| 5 | The Customizer | Custom brand assets, micro-interactions |
-| 6 | The Orchestrator | Tech stack, animation libs, 3D elements |
-| 7 | The Frontier | WebGL, shaders, procedural animation |
+| 1 | The Beginner | Establishes project base + anti-AI-slop rules |
+| 2 | Vocabulary Builder | Defines design references, fonts, colors, aesthetics |
+| 3 | Framework Master | Specifies CSS frameworks, layout grids, typography scales |
+| 4 | The Cloner | **Automated Web Scraping:** Pulls source code from live URLs to clone |
+| 5 | The Customizer | Determines custom brand assets & micro-interactions |
+| 6 | The Orchestrator | Specifies tech stack, animation libs (GSAP), 3D elements |
+| 7 | The Frontier | Directs WebGL, complex shaders, procedural animation |
 
-## How It Works
+## 🤝 Works Seamlessly With
 
-1. **Choose your level** (1-7) — higher levels unlock more design options
-2. **Answer questions** — project name, aesthetic, colors, fonts, etc.
-3. **Shinka builds the prompt** — structured, comprehensive, with anti-AI-slop rules baked in
-4. **Local AI enhances it** — the llama model adds creative suggestions
-5. **Paste anywhere** — Claude Code, Cursor, Windsurf, Copilot, any AI editor
-
-## Works With
-
-- Claude Code
-- Cursor
-- Windsurf
-- GitHub Copilot
-- Any AI code editor that takes text prompts
+- **Claude Code** (from Anthropic)
+- **Cursor**
+- **Windsurf**
+- **GitHub Copilot**
+- *Any AI code editor that accepts text/markdown prompts*
 
 ---
 
