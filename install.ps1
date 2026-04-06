@@ -90,17 +90,15 @@ try {
 # ── Step 4: Install shinka ───────────────────────────────────────────────────
 Write-Host "  [4/4] Installing shinka..." -ForegroundColor Cyan
 
-$shinkaDir = "$PSScriptRoot"
-if (-not (Test-Path "$shinkaDir\pyproject.toml")) {
-    # If running from outside the shinka directory, look for it
-    $shinkaDir = "$PSScriptRoot\shinka"
-    if (-not (Test-Path "$shinkaDir\pyproject.toml")) {
-        Write-Host "  ✗ Could not find shinka project. Run this script from the shinka directory." -ForegroundColor Red
-        exit 1
-    }
-}
+$pipx = Get-Command pipx -ErrorAction SilentlyContinue
 
-& $python -m pip install -e $shinkaDir --quiet 2>&1 | Out-Null
+if ($pipx) {
+    & pipx install https://github.com/millw14/shinka/archive/main.zip --force
+} else {
+    Write-Host "  ⚠ pipx not found (which is recommended for CLI apps)." -ForegroundColor DarkGray
+    Write-Host "  Installing via pip instead..." -ForegroundColor Yellow
+    & $python -m pip install https://github.com/millw14/shinka/archive/main.zip --upgrade --quiet 2>&1 | Out-Null
+}
 Write-Host "  ✓ shinka installed" -ForegroundColor Green
 
 # ── Done ─────────────────────────────────────────────────────────────────────
