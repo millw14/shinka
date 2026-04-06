@@ -6,7 +6,7 @@ from rich.prompt import Prompt, Confirm, IntPrompt
 
 from shinka.ui import (
     console, phase_header, show_level_selector, show_choices,
-    random_kaomoji,
+    random_kaomoji, SYM_ARROW, SYM_CHECK, SYM_WARN,
 )
 from shinka.templates import (
     AESTHETICS, FONT_PAIRINGS, COLOR_PALETTES, TYPOGRAPHY_SCALES,
@@ -14,6 +14,10 @@ from shinka.templates import (
     TECH_STACKS, ANIMATION_LIBS,
 )
 from shinka.levels import LEVELS, get_all_level_summaries
+
+# Precompute prompt prefix string (resolves the symbol at import time)
+_P = f"  [magenta]{SYM_ARROW}[/magenta]"
+_OK = f"  [green]{SYM_CHECK}[/green]"
 
 
 class WizardAnswers:
@@ -83,13 +87,13 @@ def run_wizard() -> WizardAnswers:
     show_level_selector(get_all_level_summaries())
 
     answers.level = IntPrompt.ask(
-        f"  [magenta]›[/magenta] [bold]Choose your level[/bold]",
+        f"{_P} [bold]Choose your level[/bold]",
         choices=[str(i) for i in range(1, 8)],
         default=3,
     )
     selected_level = level_info[answers.level]
     console.print(
-        f"\n  [green]✓[/green] [bold]{selected_level['name']}[/bold] — "
+        f"\n{_OK} [bold]{selected_level['name']}[/bold] — "
         f"{selected_level['tagline']}  {random_kaomoji('happy')}\n"
     )
 
@@ -99,11 +103,11 @@ def run_wizard() -> WizardAnswers:
     if 1 in active_phases:
         phase_header(1, "Project Identity")
 
-        answers.project_name = Prompt.ask("  [magenta]›[/magenta] Project name")
-        answers.description = Prompt.ask("  [magenta]›[/magenta] What does this project do? (one line)")
-        answers.audience = Prompt.ask("  [magenta]›[/magenta] Who is this for? (target audience)")
+        answers.project_name = Prompt.ask(f"{_P} Project name")
+        answers.description = Prompt.ask(f"{_P} What does this project do? (one line)")
+        answers.audience = Prompt.ask(f"{_P} Who is this for? (target audience)")
         answers.goal = Prompt.ask(
-            "  [magenta]›[/magenta] Primary goal of this page",
+            f"{_P} Primary goal of this page",
             choices=["waitlist", "sales", "portfolio", "docs", "showcase", "other"],
             default="waitlist",
         )
@@ -115,7 +119,7 @@ def run_wizard() -> WizardAnswers:
             console.print(f"    [magenta]{i:2}.[/magenta] [bold]{key}[/bold] [dim]— {SECTION_TEMPLATES[key][:60]}...[/dim]")
 
         section_input = Prompt.ask(
-            "\n  [magenta]›[/magenta] Pick sections (comma-separated numbers, e.g. 1,2,5,7)",
+            f"\n{_P} Pick sections (comma-separated numbers, e.g. 1,2,5,7)",
             default="1,2,5,7",
         )
         try:
@@ -124,7 +128,7 @@ def run_wizard() -> WizardAnswers:
         except (ValueError, IndexError):
             answers.sections = ["hero", "features", "cta", "footer"]
 
-        console.print(f"  [green]✓[/green] Sections: [bold]{', '.join(answers.sections)}[/bold]\n")
+        console.print(f"{_OK} Sections: [bold]{', '.join(answers.sections)}[/bold]\n")
 
     # ── Phase 2: Design Direction ────────────────────────────────────────
     if 2 in active_phases:
@@ -135,7 +139,7 @@ def run_wizard() -> WizardAnswers:
             k: v["description"] for k, v in AESTHETICS.items()
         })
         answers.aesthetic = Prompt.ask(
-            "  [magenta]›[/magenta] Choose aesthetic",
+            f"{_P} Choose aesthetic",
             choices=list(AESTHETICS.keys()),
             default="dark_tech",
         )
@@ -143,7 +147,7 @@ def run_wizard() -> WizardAnswers:
 
         # Reference sites
         answers.reference_sites = Prompt.ask(
-            "  [magenta]›[/magenta] Any reference sites for inspiration? (URLs or names, or skip)",
+            f"{_P} Any reference sites for inspiration? (URLs or names, or skip)",
             default="",
         )
 
@@ -151,11 +155,11 @@ def run_wizard() -> WizardAnswers:
         console.print(f"\n  [bold cyan]Font Pairings:[/bold cyan]")
         for key, val in FONT_PAIRINGS.items():
             console.print(
-                f"    [magenta]›[/magenta] [bold]{key}[/bold] — "
+                f"    [magenta]{SYM_ARROW}[/magenta] [bold]{key}[/bold] — "
                 f"{val['heading']} + {val['body']} [dim]({val['note']})[/dim]"
             )
         answers.font_pairing = Prompt.ask(
-            "\n  [magenta]›[/magenta] Choose font pairing",
+            f"\n{_P} Choose font pairing",
             choices=list(FONT_PAIRINGS.keys()),
             default="tech_premium",
         )
@@ -165,11 +169,11 @@ def run_wizard() -> WizardAnswers:
         console.print(f"\n  [bold cyan]Color Palettes:[/bold cyan]")
         for key, val in COLOR_PALETTES.items():
             console.print(
-                f"    [magenta]›[/magenta] [bold]{key}[/bold] — "
+                f"    [magenta]{SYM_ARROW}[/magenta] [bold]{key}[/bold] — "
                 f"[dim]{val['mood']}[/dim]  accent: {val['accent']}"
             )
         answers.color_palette = Prompt.ask(
-            "\n  [magenta]›[/magenta] Choose color palette",
+            f"\n{_P} Choose color palette",
             choices=list(COLOR_PALETTES.keys()),
             default="midnight_cyan",
         )
@@ -178,9 +182,9 @@ def run_wizard() -> WizardAnswers:
         # Animation
         console.print(f"\n  [bold cyan]Animation Intensity:[/bold cyan]")
         for key, val in ANIMATION_PRESETS.items():
-            console.print(f"    [magenta]›[/magenta] [bold]{key}[/bold] — [dim]{val['description']}[/dim]")
+            console.print(f"    [magenta]{SYM_ARROW}[/magenta] [bold]{key}[/bold] — [dim]{val['description']}[/dim]")
         answers.animation_intensity = Prompt.ask(
-            "\n  [magenta]›[/magenta] Animation level",
+            f"\n{_P} Animation level",
             choices=list(ANIMATION_PRESETS.keys()),
             default="moderate",
         )
@@ -192,7 +196,7 @@ def run_wizard() -> WizardAnswers:
 
         # Grid
         answers.grid_system = Prompt.ask(
-            "  [magenta]›[/magenta] Grid system",
+            f"{_P} Grid system",
             choices=["8-point", "4-point", "custom"],
             default="8-point",
         )
@@ -200,9 +204,9 @@ def run_wizard() -> WizardAnswers:
         # Typography scale
         console.print(f"\n  [bold cyan]Typography Scales:[/bold cyan]")
         for key, val in TYPOGRAPHY_SCALES.items():
-            console.print(f"    [magenta]›[/magenta] [bold]{key}[/bold] — {val['name']} [dim]({val['feel']})[/dim]")
+            console.print(f"    [magenta]{SYM_ARROW}[/magenta] [bold]{key}[/bold] — {val['name']} [dim]({val['feel']})[/dim]")
         answers.typography_scale = Prompt.ask(
-            "\n  [magenta]›[/magenta] Typography scale",
+            f"\n{_P} Typography scale",
             choices=list(TYPOGRAPHY_SCALES.keys()),
             default="major_third",
         )
@@ -210,7 +214,7 @@ def run_wizard() -> WizardAnswers:
 
         # Accessibility
         answers.accessibility = Prompt.ask(
-            "  [magenta]›[/magenta] Accessibility level",
+            f"{_P} Accessibility level",
             choices=["wcag_aa", "wcag_aaa", "none"],
             default="wcag_aa",
         )
@@ -221,7 +225,7 @@ def run_wizard() -> WizardAnswers:
         for i, key in enumerate(pattern_keys, 1):
             console.print(f"    [magenta]{i:2}.[/magenta] [bold]{key}[/bold] [dim]— {COMPONENT_PATTERNS[key][:70]}...[/dim]")
         pattern_input = Prompt.ask(
-            "\n  [magenta]›[/magenta] Patterns (comma-separated numbers, or skip)",
+            f"\n{_P} Patterns (comma-separated numbers, or skip)",
             default="",
         )
         if pattern_input.strip():
@@ -241,14 +245,14 @@ def run_wizard() -> WizardAnswers:
 
         urls = []
         while True:
-            url_input = Prompt.ask("  [magenta]›[/magenta] URL", default="done")
+            url_input = Prompt.ask(f"{_P} URL", default="done")
             if url_input.lower() in ("done", "skip"):
                 break
             url = url_input.strip()
             if not url.startswith("http"):
                 url = "https://" + url
             urls.append(url)
-            console.print(f"    [green]✓[/green] Added: [bold]{url}[/bold]")
+            console.print(f"    [green]{SYM_CHECK}[/green] Added: [bold]{url}[/bold]")
 
         if urls:
             answers.scrape_urls = urls
@@ -258,18 +262,18 @@ def run_wizard() -> WizardAnswers:
                 console.print(f"\n  [cyan]Scraping {len(urls)} site(s)...[/cyan]  {random_kaomoji('thinking')}")
                 answers.scraped_data = scrape_multiple_urls(urls)
             else:
-                console.print(f"  [yellow]⚠[/yellow] Browser not available. You can paste code manually instead.")
+                console.print(f"  [yellow]{SYM_WARN}[/yellow] Browser not available. You can paste code manually instead.")
                 console.print("  [dim]Type 'done' when finished, or 'skip'.[/dim]\n")
                 lines = []
                 while True:
-                    line = Prompt.ask("  [magenta]│[/magenta]", default="skip")
+                    line = Prompt.ask("  [magenta]|[/magenta]", default="skip")
                     if line.lower() in ("done", "skip"):
                         break
                     lines.append(line)
                 answers.code_snippets = "\n".join(lines) if lines else ""
 
         answers.effects_to_replicate = Prompt.ask(
-            "\n  [magenta]›[/magenta] Specific effects to replicate? (describe or skip)",
+            f"\n{_P} Specific effects to replicate? (describe or skip)",
             default="",
         )
 
@@ -278,19 +282,19 @@ def run_wizard() -> WizardAnswers:
         phase_header(5, "Custom Assets & Brand")
 
         answers.custom_colors = Prompt.ask(
-            "  [magenta]›[/magenta] Custom brand hex colors? (e.g. #ff6b35, #004e98 or skip)",
+            f"{_P} Custom brand hex colors? (e.g. #ff6b35, #004e98 or skip)",
             default="",
         )
         answers.custom_fonts = Prompt.ask(
-            "  [magenta]›[/magenta] Custom font URLs or names? (or skip)",
+            f"{_P} Custom font URLs or names? (or skip)",
             default="",
         )
         answers.custom_interactions = Prompt.ask(
-            "  [magenta]›[/magenta] Specific micro-interactions to implement? (or skip)",
+            f"{_P} Specific micro-interactions to implement? (or skip)",
             default="",
         )
         answers.custom_assets_description = Prompt.ask(
-            "  [magenta]›[/magenta] Describe any custom SVG/illustration needs (or skip)",
+            f"{_P} Describe any custom SVG/illustration needs (or skip)",
             default="",
         )
 
@@ -302,7 +306,7 @@ def run_wizard() -> WizardAnswers:
             k: f"{v['name']} — {v['description']}" for k, v in TECH_STACKS.items()
         })
         answers.tech_stack = Prompt.ask(
-            "  [magenta]›[/magenta] Tech stack",
+            f"{_P} Tech stack",
             choices=list(TECH_STACKS.keys()),
             default="html_css_js",
         )
@@ -312,23 +316,23 @@ def run_wizard() -> WizardAnswers:
             k: f"{v['name']} — {v['description']}" for k, v in ANIMATION_LIBS.items()
         })
         answers.animation_lib = Prompt.ask(
-            "  [magenta]›[/magenta] Animation library",
+            f"{_P} Animation library",
             choices=list(ANIMATION_LIBS.keys()),
             default="css_only",
         )
 
         answers.smooth_scroll = Prompt.ask(
-            "  [magenta]›[/magenta] Smooth scrolling",
+            f"{_P} Smooth scrolling",
             choices=["lenis", "native", "none"],
             default="native",
         )
         answers.three_d_elements = Prompt.ask(
-            "  [magenta]›[/magenta] 3D elements?",
+            f"{_P} 3D elements?",
             choices=["threejs", "spline", "none"],
             default="none",
         )
         answers.component_source = Prompt.ask(
-            "  [magenta]›[/magenta] Pre-built components?",
+            f"{_P} Pre-built components?",
             choices=["shadcn", "radix", "daisyui", "custom", "none"],
             default="none",
         )
@@ -338,23 +342,23 @@ def run_wizard() -> WizardAnswers:
         phase_header(7, "The Frontier")
 
         answers.webgl_requirements = Prompt.ask(
-            "  [magenta]›[/magenta] WebGL / canvas requirements? (describe or skip)",
+            f"{_P} WebGL / canvas requirements? (describe or skip)",
             default="",
         )
         answers.shader_effects = Prompt.ask(
-            "  [magenta]›[/magenta] Custom shader / GLSL effects? (describe or skip)",
+            f"{_P} Custom shader / GLSL effects? (describe or skip)",
             default="",
         )
         answers.data_viz = Prompt.ask(
-            "  [magenta]›[/magenta] Real-time data visualizations? (describe or skip)",
+            f"{_P} Real-time data visualizations? (describe or skip)",
             default="",
         )
         answers.procedural_animation = Prompt.ask(
-            "  [magenta]›[/magenta] Procedural animation descriptions? (describe or skip)",
+            f"{_P} Procedural animation descriptions? (describe or skip)",
             default="",
         )
         answers.performance_budget = Prompt.ask(
-            "  [magenta]›[/magenta] Performance budget? (e.g. '60fps, <3s LCP' or skip)",
+            f"{_P} Performance budget? (e.g. '60fps, <3s LCP' or skip)",
             default="60fps, <3s LCP, <500KB JS",
         )
 

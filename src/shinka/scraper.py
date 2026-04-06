@@ -11,8 +11,9 @@ from typing import Optional
 
 from shinka.ui import (
     console, animate_install_step, get_download_progress,
-    random_kaomoji,
+    random_kaomoji, SYM_WARN, SYM_CHECK, SYM_CROSS,
 )
+import platform
 
 
 def _safe_evaluate(page, js_code: str, default=None, timeout: int = 8):
@@ -22,7 +23,7 @@ def _safe_evaluate(page, js_code: str, default=None, timeout: int = 8):
         try:
             return future.result(timeout=timeout)
         except (concurrent.futures.TimeoutError, Exception) as e:
-            console.print(f"    [yellow]⚠[/yellow] [dim]Extraction timed out, skipping...[/dim]")
+            console.print(f"    [yellow]{SYM_WARN}[/yellow] [dim]Extraction timed out, skipping...[/dim]")
             return default if default is not None else ""
 
 
@@ -38,7 +39,7 @@ def ensure_playwright():
             except Exception:
                 pass
     except ImportError:
-        console.print(f"  [yellow]⚠[/yellow] Playwright not found. Installing...")
+        console.print(f"  [yellow]{SYM_WARN}[/yellow] Playwright not found. Installing...")
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "playwright"],
             capture_output=True, text=True,
@@ -51,10 +52,24 @@ def ensure_playwright():
         capture_output=True, text=True,
     )
     if result.returncode != 0:
-        console.print(f"  [red]✗[/red] Browser install failed: {result.stderr[:200]}")
+        console.print(f"  [red]{SYM_CROSS}[/red] Browser install failed.")
+        console.print(f"  [dim]Error: {result.stderr[:200]}[/dim]")
+        
+        # System-specific manual instructions
+        if platform.system().lower() == "windows":
+            console.print("  [yellow]{SYM_WARN}[/yellow] Ensure you run the terminal as Administrator or run:")
+            console.print("  [cyan]playwright install chromium[/cyan]")
+        elif platform.system().lower() == "linux":
+            console.print("  [yellow]{SYM_WARN}[/yellow] On Linux, you may need system dependencies. Run:")
+            console.print("  [cyan]sudo playwright install-deps chromium[/cyan]")
+            console.print("  [cyan]playwright install chromium[/cyan]")
+        else:
+            console.print("  [yellow]{SYM_WARN}[/yellow] Please run manually:")
+            console.print("  [cyan]playwright install chromium[/cyan]")
+            
         return False
 
-    console.print(f"  [green]✓[/green] [bold]Browser engine ready[/bold]  {random_kaomoji('done')}")
+    console.print(f"  [green]{SYM_CHECK}[/green] [bold]Browser engine ready[/bold]  {random_kaomoji('done')}")
     return True
 
 

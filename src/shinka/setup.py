@@ -7,13 +7,14 @@ import sys
 import shutil
 import time
 import platform
+import tempfile
 from pathlib import Path
 
 from rich.prompt import Confirm
 
 from shinka.ui import (
     console, animate_install_step, get_download_progress,
-    random_kaomoji, section_header,
+    random_kaomoji, section_header, SYM_CHECK, SYM_WARN, SYM_CROSS
 )
 
 MODEL_NAME = "llama3.2:1b"
@@ -21,64 +22,58 @@ OLLAMA_WIN_URL = "https://ollama.com/download/OllamaSetup.exe"
 
 
 def is_ollama_installed() -> bool:
-    """Check if Ollama CLI is available."""
-    return shutil.which("ollama") is not None
+    """Check if Ollama is accessible via CLI."""
+    return shutil.which("ollama") is not None or (
+        platform.system().lower() == "windows"
+        and (Path(r"C:\Users") / Path.home().name / "AppData" / "Local" / "Programs" / "Ollama" / "ollama.exe").exists()
+    )
 
 
 def is_ollama_running() -> bool:
-    """Check if Ollama server is responding."""
+    """Check if the Ollama server is responding to API requests."""
     try:
         import httpx
-        r = httpx.get("http://127.0.0.1:11434/api/tags", timeout=3)
+        r = httpx.get("http://127.0.0.1:11434/api/tags", timeout=1.0)
         return r.status_code == 200
-    except Exception:
+    except (httpx.RequestError, ImportError):
         return False
 
 
 def is_model_available(model: str = MODEL_NAME) -> bool:
-    """Check if the required model is already pulled."""
+    """Check if the local model has been pulled."""
     try:
         import httpx
-        r = httpx.get("http://127.0.0.1:11434/api/tags", timeout=5)
+        r = httpx.get("http://127.0.0.1:11434/api/tags", timeout=2.0)
         if r.status_code == 200:
-            data = r.json()
-            models = [m.get("name", "") for m in data.get("models", [])]
-            return any(model in m for m in models)
-    except Exception:
-        pass
-    return False
+            models = r.json().get("models", [])
+            return any(m.get("name") == model for m in models)
+        return False
+    except (httpx.RequestError, ImportError):
+        return False
 
 
 def install_ollama():
-    """Install Ollama on the user's system."""
+    """Download and install Ollama based on the OS."""
     system = platform.system().lower()
 
     if system == "windows":
-        console.print(f"\n  [yellow]⚠[/yellow] Ollama is not installed.")
-        console.print(f"  [dim]Shinka needs Ollama to run a local AI model.[/dim]\n")
-
-        if not Confirm.ask(f"  [cyan]Install Ollama automatically?[/cyan] {random_kaomoji('wait')}"):
-            console.print(f"\n  [red]✗[/red] Cannot continue without Ollama.")
-            console.print(f"  [dim]Install manually: https://ollama.com/download[/dim]\n")
+        console.print(f"\n  [yellow]{SYM_WARN}[/yellow] Ollama is not installed.")
+        if not Confirm.ask(f"  [cyan]Install Ollama automatically?[/cyan]"):
+            console.print(f"  [dim]Install manually: https://ollama.com/download[/dim]")
             sys.exit(1)
 
         # Try winget first
-        animate_install_step("Checking winget availability")
-        winget_available = shutil.which("winget") is not None
-
-        if winget_available:
+        if shutil.which("winget"):
             animate_install_step("Installing Ollama via winget")
             try:
                 subprocess.run(
                     ["winget", "install", "Ollama.Ollama", "--accept-package-agreements", "--accept-source-agreements"],
                     check=True,
-                    capture_output=True,
-                    text=True,
+                    stdout=subprocess.DEVNULL,
                 )
-                animate_install_step("Ollama installed successfully")
                 return
             except subprocess.CalledProcessError:
-                console.print(f"  [yellow]⚠[/yellow] winget install failed, trying direct download...")
+                console.print(f"  [yellow]{SYM_WARN}[/yellow] winget install failed, trying direct download...")
 
         # Fallback: direct download
         animate_install_step("Downloading Ollama installer")
@@ -99,12 +94,12 @@ def install_ollama():
             subprocess.run([str(installer_path)], check=True)
             animate_install_step("Ollama installed")
         except Exception as e:
-            console.print(f"\n  [red]✗[/red] Download failed: {e}")
+            console.print(f"\n  [red]{SYM_CROSS}[/red] Download failed: {e}")
             console.print(f"  [dim]Please install Ollama manually: https://ollama.com/download[/dim]")
             sys.exit(1)
 
     elif system == "darwin":
-        console.print(f"\n  [yellow]⚠[/yellow] Ollama is not installed.")
+        console.print(f"\n  [yellow]{SYM_WARN}[/yellow] Ollama is not installed.")
         if Confirm.ask(f"  [cyan]Install Ollama via brew?[/cyan]"):
             subprocess.run(["brew", "install", "ollama"], check=True)
         else:
@@ -112,7 +107,7 @@ def install_ollama():
             sys.exit(1)
 
     else:  # Linux
-        console.print(f"\n  [yellow]⚠[/yellow] Ollama is not installed.")
+        console.print(f"\n  [yellow]{SYM_WARN}[/yellow] Ollama is not installed.")
         if Confirm.ask(f"  [cyan]Install Ollama automatically?[/cyan]"):
             subprocess.run("curl -fsSL https://ollama.com/install.sh | sh", shell=True, check=True)
         else:
@@ -127,7 +122,9 @@ def start_ollama_server():
 
     animate_install_step("Starting Ollama server")
 
+    log_file = tempfile.NamedTemporaryFile(delete=False, suffix=".log")
     system = platform.system().lower()
+    
     if system == "windows":
         # On Windows, try to start via the app or serve command
         ollama_path = shutil.which("ollama")
@@ -135,7 +132,7 @@ def start_ollama_server():
             subprocess.Popen(
                 ["ollama", "serve"],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stderr=log_file,
                 creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
             )
         else:
@@ -145,29 +142,42 @@ def start_ollama_server():
                 subprocess.Popen(
                     [str(default_path), "serve"],
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
+                    stderr=log_file,
                     creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0,
                 )
     else:
         subprocess.Popen(
             ["ollama", "serve"],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=log_file,
         )
 
     # Wait for server to come up
     for _ in range(30):
         if is_ollama_running():
+            try:
+                Path(log_file.name).unlink()
+            except Exception:
+                pass
             return
         time.sleep(1)
 
-    console.print(f"  [yellow]⚠[/yellow] Ollama server is slow to start. Continuing anyway...")
+    console.print(f"  [yellow]{SYM_WARN}[/yellow] Ollama server is slow to start. Continuing anyway...")
+    
+    try:
+        err_content = Path(log_file.name).read_text(encoding="utf-8").strip()
+        if err_content:
+            first_err = err_content.splitlines()[0]
+            console.print(f"  [dim]Log: {first_err}[/dim]")
+        Path(log_file.name).unlink()
+    except Exception:
+        pass
 
 
 def pull_model(model: str = MODEL_NAME):
     """Pull the required model with a progress animation."""
     if is_model_available(model):
-        console.print(f"  [green]✓[/green] [bold]Model {model} ready[/bold]  {random_kaomoji('happy')}")
+        console.print(f"  [green]{SYM_CHECK}[/green] [bold]Model {model} ready[/bold]  {random_kaomoji('happy')}")
         return
 
     console.print(f"\n  [cyan]Downloading model: [bold]{model}[/bold][/cyan]  {random_kaomoji('wait')}")
@@ -189,15 +199,15 @@ def pull_model(model: str = MODEL_NAME):
                 else:
                     progress.update(task, description=status)
 
-        console.print(f"\n  [green]✓[/green] [bold]Model {model} downloaded![/bold]  {random_kaomoji('done')}")
+        console.print(f"\n  [green]{SYM_CHECK}[/green] [bold]Model {model} downloaded![/bold]  {random_kaomoji('done')}")
 
     except Exception as e:
-        console.print(f"\n  [yellow]⚠[/yellow] Model pull via library failed ({e}), trying CLI...")
+        console.print(f"\n  [yellow]{SYM_WARN}[/yellow] Model pull via library failed ({e}), trying CLI...")
         try:
             subprocess.run(["ollama", "pull", model], check=True)
-            console.print(f"  [green]✓[/green] [bold]Model {model} ready[/bold]")
+            console.print(f"  [green]{SYM_CHECK}[/green] [bold]Model {model} ready[/bold]")
         except subprocess.CalledProcessError:
-            console.print(f"  [red]✗[/red] Failed to pull model. Run manually: ollama pull {model}")
+            console.print(f"  [red]{SYM_CROSS}[/red] Failed to pull model. Run manually: ollama pull {model}")
             sys.exit(1)
 
 
@@ -209,11 +219,11 @@ def ensure_ready():
     if not is_ollama_installed():
         install_ollama()
     else:
-        console.print(f"  [green]✓[/green] [bold]Ollama installed[/bold]  {random_kaomoji('happy')}")
+        console.print(f"  [green]{SYM_CHECK}[/green] [bold]Ollama installed[/bold]  {random_kaomoji('happy')}")
 
     # Step 2: Server running?
     start_ollama_server()
-    console.print(f"  [green]✓[/green] [bold]Ollama server running[/bold]  {random_kaomoji('happy')}")
+    console.print(f"  [green]{SYM_CHECK}[/green] [bold]Ollama server running[/bold]  {random_kaomoji('happy')}")
 
     # Step 3: Model available?
     pull_model()

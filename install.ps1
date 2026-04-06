@@ -2,6 +2,8 @@
 # shinka installer — simple script without try/catch to avoid parsing bugs
 # ──────────────────────────────────────────────────────────────────────────────
 $ErrorActionPreference = "Continue"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
 
 Write-Host "  Installing shinka + local AI..." -ForegroundColor Yellow
 Write-Host ""

@@ -2,16 +2,34 @@
 shinka CLI — main entry point.
 Handles first-run setup, wizard launch, and prompt output.
 """
+import os
 import sys
 from pathlib import Path
 from datetime import datetime
 
-import typer
+# ── Ensure UTF-8 before anything else ────────────────────────────────────────
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
-from shinka.ui import (
-    console, show_welcome, show_result, goodbye,
-    section_header, random_kaomoji, animate_install_step,
-)
+try:
+    import typer
+    from shinka.ui import (
+        console, show_welcome, show_result, goodbye,
+        section_header, random_kaomoji, animate_install_step,
+    )
+except ImportError as e:
+    # Graceful fallback if rich/typer aren't installed properly
+    print(f"\n  [ERROR] Missing dependency: {e}")
+    print("  Please reinstall shinka:")
+    print("    pip install shinka --upgrade")
+    print("  Or: pip install rich typer[all] pyperclip httpx ollama\n")
+    sys.exit(1)
 
 app = typer.Typer(
     help="shinka — 7 Levels Frontend Design Prompt Wizard with Local AI",
@@ -47,9 +65,9 @@ def start(
         from rich.prompt import Prompt
         answers = WizardAnswers()
         answers.level = 3
-        answers.project_name = Prompt.ask("  [magenta]›[/magenta] Project name")
-        answers.description = Prompt.ask("  [magenta]›[/magenta] What does it do?")
-        answers.audience = Prompt.ask("  [magenta]›[/magenta] Target audience")
+        answers.project_name = Prompt.ask("  [magenta]>[/magenta] Project name")
+        answers.description = Prompt.ask("  [magenta]>[/magenta] What does it do?")
+        answers.audience = Prompt.ask("  [magenta]>[/magenta] Target audience")
         answers.goal = "showcase"
         answers.sections = ["hero", "features", "social_proof", "cta", "footer"]
         answers.aesthetic = "dark_tech"
@@ -81,6 +99,7 @@ def start(
 
     # ── Output ───────────────────────────────────────────────────────────
     # Copy to clipboard
+    clipboard_ok = False
     try:
         import pyperclip
         pyperclip.copy(final_prompt)
@@ -101,17 +120,15 @@ def start(
     try:
         Path(save_path).write_text(final_prompt, encoding="utf-8")
     except Exception as e:
-        console.print(f"  [yellow]⚠[/yellow] Could not save file: {e}")
+        console.print(f"  [yellow]![/yellow] Could not save file: {e}")
         save_path = None
 
-    # Display result
+    # Display result — pass clipboard status so the message is accurate
     show_result(
         final_prompt,
         saved_path=save_path,
+        clipboard_ok=clipboard_ok,
     )
-
-    if not clipboard_ok:
-        console.print(f"  [yellow]⚠[/yellow] [dim]Could not copy to clipboard. The prompt was saved to the file above.[/dim]")
 
     goodbye()
 

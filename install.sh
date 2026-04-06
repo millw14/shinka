@@ -5,7 +5,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 set -e
-
+export PYTHONIOENCODING=utf-8
 # Colors
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -75,7 +75,7 @@ if ! command -v pipx >/dev/null 2>&1; then
     
     # Temporarily add pipx bin to PATH for this script 
     # (since ensurepath only applies to future terminal sessions)
-    PIPX_BIN_DIR=$($PYTHON_CMD -m python -c "import site; import os; print(os.path.join(site.USER_BASE, 'bin'))" 2>/dev/null || echo "$HOME/.local/bin")
+    PIPX_BIN_DIR=$($PYTHON_CMD -c "import site; import os; print(os.path.join(site.USER_BASE, 'bin'))" 2>/dev/null || echo "$HOME/.local/bin")
     export PATH="$PIPX_BIN_DIR:$PATH"
 fi
 
